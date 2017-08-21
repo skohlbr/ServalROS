@@ -1,0 +1,18 @@
+{
+  "name": "ServalROS",
+  "version": "0.0.1",
+  "description": "Communicator interface to transmit messages between serval and ROS",
+  "license": "MIT",
+  "dependencies": {
+    "mocha": "^3.4.2",
+    "chai": "^4.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.0.0",
+    "mocha": "^3.4.2",
+    "nyc": "^11.1.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
+}
