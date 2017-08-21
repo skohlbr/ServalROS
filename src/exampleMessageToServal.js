@@ -19,9 +19,6 @@ const blankKeyRing = {
 
 let myKeyRing = blankKeyRing;
 
-getMyKeyRingIdentity();
-
-
 function getMyKeyRingIdentity(){
     /*  let newKeyRingID = curl http://harry:potter@localhost:4110/restful/keyring/identities.json
     *       => yields https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
@@ -32,8 +29,7 @@ function getMyKeyRingIdentity(){
 
 function setMyKeyring(response) {
 
-    let parsedBody = JSON.parse(response.body);
-    let myKeyRing =  parsedBody;
+    let myKeyRing = JSON.parse(response.body);
     console.log("Parsed response keyring contains:");
     console.log(Util.inspect(myKeyRing));
 }
