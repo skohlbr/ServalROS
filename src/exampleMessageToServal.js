@@ -29,20 +29,23 @@ function getMyKeyRingIdentity(){
 
 function setMyKeyring(response) {
 
-    let myKeyRing = JSON.parse(response.body);
+    // let myKeyRing = JSON.parse(response.body);
     console.log("Parsed response keyring contains:");
-    console.log(Util.inspect(myKeyRing));
+    console.log(Util.inspect(response));
 }
 
 module.exports.init = function init() {
-    let myKeyRingID = getMyKeyRingIdentity();
-    let did = myKeyRingID.identity.did;
+    getMyKeyRingIdentity();
+
+    /* let did = myKeyRingID.identity.did;
     let sid = myKeyRingID.identity.sid;
     let identity = myKeyRingID.identity.identity;
 
     console.log("DID: " + did);
     console.log("SID: " + sid);
-    console.log("AID: " + identity);
+    console.log("AID: " + identity); */
+
+
 };
 
 
@@ -64,6 +67,8 @@ const blankMsgWithSmallManifest = {
 module.exports.sendExampleMessage = function sendExampleMessage(messageText) {
     // TODO: PROCEED HERE: create client, build some resonable bundle with headers
 
+    console.log("myKeyRingID: " + Util.inspect(myKeyRingID)); 
+    
     let postData = blankMsgWithSmallManifest;
     postData.manifest.version = "0.1";
 
@@ -84,7 +89,7 @@ function sendPOSTMessageToServer(hostname, port, path, postData, callback) {
         headers: {
             'Authorization': authString,
             'Content-Type': 'rhizome/manifest; format=text+binarysig',
-            'Content-Length': Buffer.byteLength(postData),
+            'Content-Length': Buffer.byteLength(JSON.stringify(postData)),
             'Serval-Rhizome-Bundle-Name': bundlename,
             'Serval-Rhizome-Bundle-Crypt': 0
         }
@@ -109,7 +114,7 @@ function sendPOSTMessageToServer(hostname, port, path, postData, callback) {
     });
 
     // write data to request body
-    request.write(postData);
+    request.write(JSON.stringify(postData));
     request.end();
 
 }
@@ -140,8 +145,8 @@ function sendGETMessageToServer(hostname, port, path, callback) {
             body += chunk;
         });
         response.on('end', () => {
-            // console.log('Received message: \n' + body);
-            callback();
+            console.log('GET request received response message: \n' + body);
+            callback(body);
         });
     });
 
