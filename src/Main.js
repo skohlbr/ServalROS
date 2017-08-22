@@ -5,4 +5,3 @@
 
 let example = require('./exampleMessageToServal');
 example.init();
-example.sendExampleMessage();
