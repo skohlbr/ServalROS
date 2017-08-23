@@ -3,5 +3,5 @@
  *
  */
 
-let example = require('./exampleMessageToServal');
+let example = require('../playground/exampleMessageToServal');
 example.init();

@@ -68,34 +68,33 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
     const authString = "harry:potter";
     const authStringEnc = "Basic " + (new Buffer("harry:potter").toString('base64'));
 
-    const crlf = String.fromCharCode(10); // use only \n as newline (UNIX style) .. using \r\n yields problems
+    const crlf = "\r\n"; //String.fromCharCode(10); // use only \n as newline (UNIX style) .. using \r\n yields problems
 
-    let boundary = "-=boundary" + Math.random().toString(16) + "=-";
+    let boundary = "boundary" + Math.random().toString(8).replace(".","");
+    // let boundary = "boundary";
     let startBoundary = "--" + boundary;
     let endBoundary = boundary + "--" ;
 
     // bundle-id .. only applicable if you want to change a bundle / append to a bundle
     let bundleId = '0000';
     let bundleIdHeader = 'Content-Disposition: form-data; name="bundle-id"' + crlf +
-        'Content-Length: 64';
+        'Content-Type: text/plain; charset=utf-8' + crlf + 'Content-Length: 64';
 
     // bundle-author: Always needed .. as a creator of this bundle, this is usually your local sid
     let bundleAuthor = myKeyRingID.identity.sid;
+    let bundleAuthorSize = 64;
     let bundleAuthorHeader = 'Content-Disposition: form-data; name="bundle-author"' + crlf +
-        'Content-Length: 64';
+        'Content-Type: text/plain; charset=utf-8' + crlf +
+        'Content-Length: ' + bundleAuthorSize + crlf +
+        'Range: bytes=0-' + (bundleAuthorSize - 1);
 
     // bundle-secret .. necessary if you want to create a bundle with certain bundle id (basically to change/update a bundle)
     let bundleSecret = '0000';
-    let bundleIdSecret = 'Content-Disposition: form-data; name="bundle-secret"' + crlf +
-        'Content-Length: 64';
+    let bundleIdSecret = 'Content-Disposition: form-data; name="bundle-secret"'; // + crlf + 'Content-Length: 64';
 
     // payload .. follows after manifest, but filesize is important for manifest, must not be appended, if filesize is 0
     let payload = '';
     if(payloadInput && payloadInput !== undefined && payloadInput !== null) {payload = payloadInput}
-    let payloadHeader =
-        'Content-Disposition: form-data; name="payload"; filename="' + storeToFilename + '"' + crlf +
-        'Content-Length: ' + Buffer.byteLength(payload);
-
     let payloadFilesize = Buffer.byteLength(payload);
 
     let manifest =
@@ -103,11 +102,22 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
         'BK=0' + crlf +
         'crypt=0' + crlf +
         'filesize=' + payloadFilesize;
-    let manifestHeader =
-        'Content-Disposition: rhizome/manifest; format=text+binarysig; name="manifest"' + crlf +
-        'Content-Length: ' + Buffer.byteLength(manifest);
+    let manifestSize = Buffer.byteLength(manifest);
 
-    let postData = crlf +
+    let payloadBeginPos = 64 +  manifestSize;
+
+    let manifestHeader =
+        'Content-Disposition: form-data; name="manifest"' + crlf +
+        'Content-Type: rhizome/manifest; format=text+binarysig' + crlf +
+        'Content-Length: ' + manifestSize + crlf +
+        'Range: bytes=0-' + (manifestSize-1);
+    let payloadHeader =
+        'Content-Disposition: form-data; name="payload"; filename="' + storeToFilename + '"' + crlf +
+        'Content-Length: ' + payloadFilesize + crlf +
+        'Range: bytes=' + payloadBeginPos + (payloadFilesize-1);
+
+
+    let postData =
         startBoundary + crlf +
         bundleAuthorHeader + crlf + crlf + bundleAuthor + crlf +
         startBoundary + crlf +
@@ -121,18 +131,17 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
 
     postData += endBoundary;
 
+    let postHeaders = {
+        Authorization: authStringEnc,
+        Accept: "*/*"
+    };
 
     const options = {
         hostname: hostname,
         port: port,
         path: path,
         method: 'POST',
-        headers: {
-            Authorization: authStringEnc,
-            Accept: "*/*",
-            //'Content-Type': 'multipart/form-data; boundary="' + boundary + '"',
-            'Content-Length':  Buffer.byteLength(postData)
-        }
+        headers: postHeaders
     };
 
     const request = http.request(options, (response) => {
@@ -160,7 +169,11 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
         console.error(`problem with request: ${e.message}`);
     });
 
-    // write data to request body
+    let wholeSize = Buffer.byteLength(postData);
+
+    //request.setHeader('Content-Type', 'multipart/form-data; boundary="' + boundary + '"');
+    request.setHeader('Content-Type', 'multipart/form-data; boundary=' + boundary);
+    request.setHeader('Content-Length', wholeSize);
     request.write(postData);
 
     console.log("******Going to send the following request: ****************************");
@@ -168,7 +181,6 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
     console.log("******END OF REQUEST TO SEND ****************************");
 
     request.end();
-
 }
 
 function sendGETMessageToServer(hostname, port, path, callback) {

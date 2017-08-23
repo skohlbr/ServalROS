@@ -3,8 +3,8 @@
  */
 
 // required libs should be stored in local folder: this makes sure, no internet-connection is needed
-require("./lib/eventemitter2.min.js"); // http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js
-require("./lib/roslib.min.js"); // http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js
+require("../src/lib/eventemitter2.min.js"); // http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js
+require("../src/lib/roslib.min.js"); // http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js
 
 // Connecting to ROS
 // -----------------

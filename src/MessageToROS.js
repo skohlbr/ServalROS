@@ -1,22 +1,3 @@
-/** Script adopted from RosBridge Tutorial
- * http://wiki.ros.org/roslibjs/Tutorials/BasicRosFunctionality
- *
- * Interfaces
- *  From robot:
- *      Grid map with metadata regarding origin:
- *          http://docs.ros.org/jade/api/nav_msgs/html/msg/OccupancyGrid.html
- *      Images:
- *          http://docs.ros.org/api/sensor_msgs/html/msg/Image.html
- *      Pose updates from robot (indoor)
- *          http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
- *  To robot:
- *      Move to goal pose:
- *          http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
- *          3D components ignored (x, y, yaw used)
- *      Target pose for taking photo:
- *          http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
- *          3D position used (orientation ignored)
- */
 
 // required libs stored in local folder: this makes sure, no interenet-connection is needed
 require("./lib/eventemitter2.min.js");
@@ -41,19 +22,22 @@ ros.on('close', function() {
     console.log('Connection to websocket server closed.');
 });
 
-// INCOMING MESSAGE
-function exampleIncomingImageMessage(msg) {
-    ROSLIB.Topic({ // should be
+
+// SUBSCRIBE & LISTEN
+
+module.exports.subscribeToDefaultTopic = function (messageHandlerCallback) {
+    let listener = new ROSLIB.Topic({
         ros : ros,
-        name : '/camera/image', // Topic Name goes here
-        messageType : 'sensor_msgs/Image'
+        name : '/listener',
+        messageType : 'std_msgs/String'
     });
 
-    let twist = new ROSLIB.Message(
-        // http://docs.ros.org/api/sensor_msgs/html/msg/Image.html
-
-    );
-}
+    listener.subscribe(function(message) {
+        console.log('Received message on ' + listener.name + ': ' + message.data);
+        messageHandlerCallback(message.data);
+        listener.unsubscribe(); // TODO: is this necessary??
+    });
+};
 
 
 const blankPose = {
@@ -72,31 +56,29 @@ const blankPose = {
     }
 };
 
-
-
 // OUTGOING MESSAGE to robot
-module.exports.exampleMoveToGoalPosition = function exampleMoveToGoalPosition() {
+module.exports.moveToGoalPosition = function (x, y, z) {
     let newPose = blankPose;
 
-    newPose.pose.position.x = 123;
-    newPose.pose.position.y = 456;
-    newPose.pose.position.z = 789;
+    newPose.pose.position.x = x;
+    newPose.pose.position.y = y;
+    newPose.pose.position.z = z;
 
     moveToGoalPose(newPose);
 };
 
-module.exports.exampleMoveToGoalOrientation = function exampleMoveToGoalOrientation() {
+module.exports.moveToGoalOrientation = function (x, y, z, w) {
     let newPose = blankPose;
 
-    newPose.pose.orientation.x = 123;
-    newPose.pose.orientation.y = 456;
-    newPose.pose.orientation.z = 789;
-    newPose.pose.orientation.w = 321;
+    newPose.pose.orientation.x = x;
+    newPose.pose.orientation.y = y;
+    newPose.pose.orientation.z = z;
+    newPose.pose.orientation.w = w;
 
     moveToGoalPose(newPose);
 };
 
-function moveToGoalPose(poseCoords) {
+function moveToGoalPose(pose) {
     let cmdVel = new ROSLIB.Topic({
         ros : ros,
         name : '/cmd_vel', // Topic Name goes here
