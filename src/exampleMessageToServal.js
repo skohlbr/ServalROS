@@ -39,7 +39,9 @@ function setMyKeyring(response) {
     myKeyRingID.identity.name = myKeyRing.rows[0][3];
     console.log("myKeyRingID: " + Util.inspect(myKeyRingID));
 
-    sendExampleMessage()
+    let storeToFilename = "test" + Date.now() + ".json";
+
+    sendExampleFile('', storeToFilename);
 }
 
 module.exports.init = function init() {
@@ -47,78 +49,90 @@ module.exports.init = function init() {
 
 };
 
+// see https://stackoverflow.com/questions/32087500/boundary-in-httppost
+// and https://stackoverflow.com/questions/37712081/uploading-a-file-with-node-http-module
 
-const blankMsgWithSmallManifest = {
-    "bundle-author": "",
-    "BK": "",
-    "manifest": {
-        "id": "",
-        "version": "",
-        "filesize": 0,
-        "service": "theNodeToServalToRosThing",
-        "date": 0,
-    }
-    //, "payload" : {    }
-};
+//module.exports.sendExampleFile =
+function sendExampleFile(payloadInput, storeToFilename) {
 
+    // TODO: Move message-components building here
 
-//module.exports.sendExampleMessage =
-function sendExampleMessage(messageText) {
-
-    let postData = blankMsgWithSmallManifest;
-    postData.manifest.version = "0.1";
-    postData.manifest['bundle-author'] = myKeyRingID.identity.sid;
-    postData.manifest['BK'] = myKeyRingID.identity.sid;
-
-    sendPOSTMessageToServer("localhost", 4110, "/restful/rhizome/insert", postData, (response) => {
+    sendPOSTMessageToServer("localhost", 4110, "/restful/rhizome/insert", payloadInput, storeToFilename, (response) => {
         console.log("Blank callback invoked ..");
     })
+
 }
 
-function sendPOSTMessageToServer(hostname, port, path, postData, callback) {
+function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFilename, callback) {
 
     const authString = "harry:potter";
     const authStringEnc = "Basic " + (new Buffer("harry:potter").toString('base64'));
-    const crlf = String.fromCharCode(10);
 
-    let bundlename = "test" + Date.now() + ".json";
+    const crlf = String.fromCharCode(10); // use only \n as newline (UNIX style) .. using \r\n yields problems
+
     let boundary = "-=boundary" + Math.random().toString(16) + "=-";
-    let postDataString = JSON.stringify(postData);
+    let startBoundary = "--" + boundary;
+    let endBoundary = boundary + "--" ;
 
+    // bundle-id .. only applicable if you want to change a bundle / append to a bundle
+    let bundleId = '0000';
+    let bundleIdHeader = 'Content-Disposition: form-data; name="bundle-id"' + crlf +
+        'Content-Length: 64';
+
+    // bundle-author: Always needed .. as a creator of this bundle, this is usually your local sid
+    let bundleAuthor = myKeyRingID.identity.sid;
+    let bundleAuthorHeader = 'Content-Disposition: form-data; name="bundle-author"' + crlf +
+        'Content-Length: 64';
+
+    // bundle-secret .. necessary if you want to create a bundle with certain bundle id (basically to change/update a bundle)
+    let bundleSecret = '0000';
+    let bundleIdSecret = 'Content-Disposition: form-data; name="bundle-secret"' + crlf +
+        'Content-Length: 64';
+
+    // payload .. follows after manifest, but filesize is important for manifest, must not be appended, if filesize is 0
+    let payload = '';
+    if(payloadInput && payloadInput !== undefined && payloadInput !== null) {payload = payloadInput}
+    let payloadHeader =
+        'Content-Disposition: form-data; name="payload"; filename="' + storeToFilename + '"' + crlf +
+        'Content-Length: ' + Buffer.byteLength(payload);
+
+    let payloadFilesize = Buffer.byteLength(payload);
+
+    let manifest =
+        'sender=' + myKeyRingID.identity.sid + crlf +
+        'BK=0' + crlf +
+        'crypt=0' + crlf +
+        'filesize=' + payloadFilesize;
     let manifestHeader =
-        'Content-Disposition: rhizome/manifest; format=text+binarysig; name="' + bundlename + '",' + crlf +
-        'Content-Length: ' + Buffer.byteLength(postDataString); // + crlf +
-        //'filename="joesNodeToServalTestRun.json"';
+        'Content-Disposition: rhizome/manifest; format=text+binarysig; name="manifest"' + crlf +
+        'Content-Length: ' + Buffer.byteLength(manifest);
 
-    let dataToSend = crlf +
-        "--" + boundary + crlf +
-        manifestHeader + crlf +
-        postDataString + crlf +
-        boundary + "--" + crlf;
+    let postData = crlf +
+        startBoundary + crlf +
+        bundleAuthorHeader + crlf + crlf + bundleAuthor + crlf +
+        startBoundary + crlf +
+        manifestHeader + crlf +  crlf + manifest + crlf;
 
-    // TODO: Keep working on building this message-headers
+    if (payloadFilesize > 0) {
+        postData +=
+            startBoundary + crlf +
+            payloadHeader + crlf +  crlf + payload + crlf;
+    }
 
-    let headerString = {
-        'Authorization': authStringEnc,
-        'Accept': "*/*",
-        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
-        //'Content-Type': 'rhizome/manifest; format=text+binarysig; boundary="' + boundary + '"',
-        'Serval-Rhizome-Bundle-BK': postData.manifest['BK'],
-        'Serval-Rhizome-Bundle-Sender': postData.manifest['bundle-author'],
-        'Serval-Rhizome-Bundle-Author': postData.manifest['bundle-author'],
-        'Serval-Rhizome-Bundle-Name': bundlename,
-        'Serval-Rhizome-Bundle-Crypt': 0,
-        'Content-Length': Buffer.byteLength(dataToSend)
-    };
+    postData += endBoundary;
+
 
     const options = {
         hostname: hostname,
         port: port,
         path: path,
         method: 'POST',
-
-        headers: headerString
-
+        headers: {
+            Authorization: authStringEnc,
+            Accept: "*/*",
+            //'Content-Type': 'multipart/form-data; boundary="' + boundary + '"',
+            'Content-Length':  Buffer.byteLength(postData)
+        }
     };
 
     const request = http.request(options, (response) => {
@@ -147,11 +161,11 @@ function sendPOSTMessageToServer(hostname, port, path, postData, callback) {
     });
 
     // write data to request body
-    request.write(dataToSend);
+    request.write(postData);
 
-    console.log("**********************************");
-    console.log("Going to send the following request:");
+    console.log("******Going to send the following request: ****************************");
     console.log(Util.inspect(request));
+    console.log("******END OF REQUEST TO SEND ****************************");
 
     request.end();
 
