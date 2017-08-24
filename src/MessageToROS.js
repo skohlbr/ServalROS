@@ -1,13 +1,17 @@
 
 // required libs stored in local folder: this makes sure, no interenet-connection is needed
+// require("../roslibjs-develop/src/roslib.js");
 require("./lib/eventemitter2.min.js");
-require("./lib/roslib.min.js");
+
+const Util = require("util");
+const ROSLIB = require("../roslibjs-develop/src/core/index");
+const ComCenter = require("./ComCenterMessageTypes");
 
 // Connecting to ROS
 // -----------------
 
 let ros = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
+    url : 'ws://localhost:9091'
 });
 
 ros.on('connection', function() {
@@ -51,30 +55,32 @@ const blankPose = {
             x : 0,
             y : 0,
             z : 0,
-            w : 0
+            w : 1
         }
     }
 };
 
 // OUTGOING MESSAGE to robot
-module.exports.moveToGoalPosition = function (x, y, z) {
+module.exports.moveToGoalPoseForPhoto = function (x, y, z) {
     let newPose = blankPose;
 
     newPose.pose.position.x = x;
     newPose.pose.position.y = y;
     newPose.pose.position.z = z;
 
+    console.log('moveToGoalPoseForPhoto yields newPose:\n' + Util.inspect(newPose));
     moveToGoalPose(newPose);
 };
 
-module.exports.moveToGoalOrientation = function (x, y, z, w) {
+module.exports.moveToGoalPoseTarget = function (x, y, yaw) {
     let newPose = blankPose;
 
     newPose.pose.orientation.x = x;
     newPose.pose.orientation.y = y;
-    newPose.pose.orientation.z = z;
-    newPose.pose.orientation.w = w;
+    newPose.orientation.w = Math.cos(yaw * 0.5);
+    newPose.orientation.z = Math.sin(yaw * 0.5);
 
+    console.log('moveToGoalPoseTarget yields newPose:\n' + Util.inspect(newPose));
     moveToGoalPose(newPose);
 };
 
