@@ -16,28 +16,17 @@ const blankKeyRing = {
     }
 };
 
-module.exports.getMyKeyRingIdentity= function (callback){
-    /*  let newKeyRingID = curl http://harry:potter@localhost:4110/restful/keyring/identities.json
-    *       => yields https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
-    *
-     */
-    sendGETMessageToServer("localhost",4110,"/restful/keyring/identities.json", (response) => {
-        setMyKeyring(response, callback)
-    });
-};
 
-module.exports.getLatestBundle= function (sinceBID, callback){
-    /*  let newKeyRingID = curl http://harry:potter@localhost:4110/restful/keyring/identities.json
-    *       => yields https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
-    *
-     */
-    sendGETMessageToServer("localhost",4110,"/restful/rhizome/newsince[/TOKEN]/bundlelist.json", (response) => {
-        readAndReturnLastestBundle(response, callback)
-    });
-};
+function getAndStoreMyKeyRingID() {
+    getMyKeyRingIdentity(setMyKeyring)
+}
 
+function getMyKeyRingIdentity (callback){
+    //  https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
+    sendGETMessageToServal("localhost",4110,"/restful/keyring/identities.json", callback(response));
+}
 
-function setMyKeyring(response, callback) {
+function setMyKeyring(response) {
 
     let myKeyRing = JSON.parse(response);
     // console.log("Parsed response keyring contains:");
@@ -49,20 +38,14 @@ function setMyKeyring(response, callback) {
     myKeyRingID.identity.did = myKeyRing.rows[0][2];
     myKeyRingID.identity.name = myKeyRing.rows[0][3];
     // console.log("myKeyRingID: " + Util.inspect(myKeyRingID));
-    callback(myKeyRingID);
 }
 
-module.exports.init = function init() {
-    getMyKeyRingIdentity();
+function sendGETMessageToServal(path, callback) {
 
-};
-
-function sendGETMessageToServer(hostname, port, path, callback) {
-
+    hostname = "localhost";
+    port = 4110;
     const authString = "harry:potter";
     const authStringEnc = "Basic " + (new Buffer("harry:potter").toString('base64'));
-
-    let bundlename = "test" + Date.now() + ".json";
 
     const options = {
         hostname: hostname,
@@ -77,14 +60,11 @@ function sendGETMessageToServer(hostname, port, path, callback) {
 
     const request = http.request(options, (response) => {
         let body = "";
-        // console.log(`STATUS: ${response.statusCode}`);
-        // console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
         response.setEncoding('utf8');
         response.on('data', (chunk) => {
             body += chunk;
         });
         response.on('end', () => {
-            // console.log('GET request received response message: \n' + body);
             callback(body);
         });
     });
@@ -92,12 +72,29 @@ function sendGETMessageToServer(hostname, port, path, callback) {
     request.on('error', (e) => {
         console.error(`problem with request: ${e.message}`);
     });
-
-    // write data to request body
     request.end();
-
 }
 
-function receivingCallback(response) {
+module.exports.showBundle= function(forBID) {
+    sendGETMessageToServal("/restful/rhizome/" + forBID + "/raw.bin", (response) => {
+        console.log(Util.inspect(response));
+    });
+};
 
+module.exports.getLatestBundles= function (sinceBID, callback){
+    sendGETMessageToServal("/restful/rhizome/newsince/" + sinceBID + "/bundlelist.json", (response) => {
+        readAndShowLastestBundle(response.body, callback)
+    });
+};
+
+function readAndShowLastestBundle(bundleList, callback){
+    console.log(bundleList);
+    if (bundleList.hasOwnProperty('rows')) {
+        if (bundleList.rows.cou > 0) {
+            callback(bundleList.rows[0][1]);
+        }
+    }
+
+    callback(false);
 }
+

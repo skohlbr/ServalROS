@@ -1,4 +1,4 @@
-const ServalGET = require('./MessageToServalGET');
+const ServalGET = require('./GetRhizomeMessage');
 const FsFile = require('./WriteToFile');
 
 const fileStoragePath = '/home/pi/tmp/';
@@ -14,21 +14,20 @@ module.exports.insertIntoServal= function (content, recipientSID){
 
     FsFile.writeToFile(content, fileNamePath);
 
-    let manifest = getIncompleteBroadcastManifest(mySID);
+    let manifest = createIncompleteBroadcastManifest(mySID);
     FsFile.writeToFile(manifest, filename);
 
     invokeServalCLIinsert(mySID, contentFilename, manifestFilename);
-
 };
 
-function getIncompleteBroadcastManifest(forSID){
+function createIncompleteBroadcastManifest(forSID){
     return 'sender=' + forSID + '\n' +
     'crypt=0';
 }
 
-function getIncompleteRecipientManifest(fromAuthorSID, toRecipientSID) {
+function createIncompleteRecipientManifest(fromAuthorSID, toRecipientSID) {
     return 'recipient=' + toRecipientSID + '\n' +
-    getIncompleteBroadcastManifest(fromAuthorSID);
+    createIncompleteBroadcastManifest(fromAuthorSID);
 }
 
 function invokeServalCLIinsert(authorSID, contentFilePath, manifestFilePath){

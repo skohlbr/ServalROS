@@ -12,6 +12,8 @@ example.subscribeToDefaultTopic(handleIncomingRosMessage);
 example.moveToGoalPoseForPhoto(12,34,56);
 
 
+
+
 function handleIncomingRosMessage(message) {
     console.log("Handling incoming ROS message: \n" + Util.inspect(message));
 

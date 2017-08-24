@@ -5,7 +5,6 @@
 let http = require('http');
 const Util = require("util");
 
-
 const blankKeyRing = {
     "http_status_code": "",
     "http_status_message": "",
@@ -19,13 +18,6 @@ const blankKeyRing = {
 
 let myKeyRingID = blankKeyRing;
 
-function getMyKeyRingIdentity(){
-    /*  let newKeyRingID = curl http://harry:potter@localhost:4110/restful/keyring/identities.json
-    *       => yields https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
-    *
-     */
-    sendGETMessageToServer("localhost",4110,"/restful/keyring/identities.json",setMyKeyring);
-}
 
 function setMyKeyring(response) {
 
@@ -44,36 +36,34 @@ function setMyKeyring(response) {
     sendExampleFile('', storeToFilename);
 }
 
-module.exports.init = function init() {
-    getMyKeyRingIdentity();
-
-};
-
-// see https://stackoverflow.com/questions/32087500/boundary-in-httppost
-// and https://stackoverflow.com/questions/37712081/uploading-a-file-with-node-http-module
-
 //module.exports.sendExampleFile =
 function sendExampleFile(payloadInput, storeToFilename) {
 
     // TODO: Move message-components building here
 
-    sendPOSTMessageToServer("localhost", 4110, "/restful/rhizome/insert", payloadInput, storeToFilename, (response) => {
+    sendPostMessage("127.0.0.1", 4110, "/restful/rhizome/insert", payloadInput, storeToFilename, (response) => {
         console.log("Blank callback invoked ..");
     })
 
 }
 
-function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFilename, callback) {
+function literalPOSTmessage() {
+
+}
+
+function sendPostMessage(hostname, port, path, payloadInput, callback) {
 
     const authString = "harry:potter";
     const authStringEnc = "Basic " + (new Buffer("harry:potter").toString('base64'));
 
     const crlf = "\r\n"; //String.fromCharCode(10); // use only \n as newline (UNIX style) .. using \r\n yields problems
 
-    let boundary = "boundary" + Math.random().toString(8).replace(".","");
-    // let boundary = "boundary";
+    // create a 40 characters core-boundary
+    // let boundary = "------------------------53c429e7f7c55c0f";
+    let boundary = "--------------boundary" + Math.random().toString(8).replace(".","");
     let startBoundary = "--" + boundary;
-    let endBoundary = boundary + "--" ;
+    //let endBoundary = boundary + "--" ;
+    let endBoundary = startBoundary + "--" + crlf ;
 
     // bundle-id .. only applicable if you want to change a bundle / append to a bundle
     let bundleId = '0000';
@@ -83,39 +73,34 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
     // bundle-author: Always needed .. as a creator of this bundle, this is usually your local sid
     let bundleAuthor = myKeyRingID.identity.sid;
     let bundleAuthorSize = 64;
-    let bundleAuthorHeader = 'Content-Disposition: form-data; name="bundle-author"' + crlf +
-        'Content-Type: text/plain; charset=utf-8' + crlf +
-        'Content-Length: ' + bundleAuthorSize + crlf +
-        'Range: bytes=0-' + (bundleAuthorSize - 1);
+    let bundleAuthorHeader = 'Content-Disposition: form-data; name="bundle-author"';
 
     // bundle-secret .. necessary if you want to create a bundle with certain bundle id (basically to change/update a bundle)
     let bundleSecret = '0000';
     let bundleIdSecret = 'Content-Disposition: form-data; name="bundle-secret"'; // + crlf + 'Content-Length: 64';
 
     // payload .. follows after manifest, but filesize is important for manifest, must not be appended, if filesize is 0
-    let payload = '';
+    let payload =
+        '#!/bin/bash\n' +
+        'echo "Banana!"';
     if(payloadInput && payloadInput !== undefined && payloadInput !== null) {payload = payloadInput}
     let payloadFilesize = Buffer.byteLength(payload);
 
+    // 'name=banana\n' + // in case file is added
+
     let manifest =
+        'service=rhizome' + crlf +
+        'name=myAwesomeExample' + crlf +
         'sender=' + myKeyRingID.identity.sid + crlf +
-        'BK=0' + crlf +
-        'crypt=0' + crlf +
-        'filesize=' + payloadFilesize;
+        'crypt=0' + crlf;
     let manifestSize = Buffer.byteLength(manifest);
 
-    let payloadBeginPos = 64 +  manifestSize;
-
     let manifestHeader =
-        'Content-Disposition: form-data; name="manifest"' + crlf +
-        'Content-Type: rhizome/manifest; format=text+binarysig' + crlf +
-        'Content-Length: ' + manifestSize + crlf +
-        'Range: bytes=0-' + (manifestSize-1);
+        'Content-Disposition: form-data; name="manifest"; filename="manifest1"' + crlf +
+        'Content-Type: rhizome/manifest;format="text+binarysig"';
     let payloadHeader =
-        'Content-Disposition: form-data; name="payload"; filename="' + storeToFilename + '"' + crlf +
-        'Content-Length: ' + payloadFilesize + crlf +
-        'Range: bytes=' + payloadBeginPos + (payloadFilesize-1);
-
+        'Content-Disposition: form-data; name="payload"; filename="myAwesomeExample.txt"' + crlf + //storeToFilename + '"' + crlf +
+        'Content-Type: application/octet-stream';
 
     let postData =
         startBoundary + crlf +
@@ -126,14 +111,15 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
     if (payloadFilesize > 0) {
         postData +=
             startBoundary + crlf +
-            payloadHeader + crlf +  crlf + payload + crlf;
+            payloadHeader + crlf +  crlf + payload + crlf + crlf;
     }
 
     postData += endBoundary;
 
     let postHeaders = {
         Authorization: authStringEnc,
-        Accept: "*/*"
+        Accept: "*/*",
+        'User-Agent': 'curl/7.38.0'
     };
 
     const options = {
@@ -141,6 +127,7 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
         port: port,
         path: path,
         method: 'POST',
+        expect: '',
         headers: postHeaders
     };
 
@@ -153,7 +140,6 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
             body += chunk;
         });
         response.on('end', () => {
-            // console.log('Received message: \n' + body);
             console.log("******************************************************************************************************");
             console.log("Tried to insert message into Serval. Whole response body from Serval REST API:");
             // console.log(Util.inspect(request)); // pages of stuff
@@ -165,15 +151,17 @@ function sendPOSTMessageToServer(hostname, port, path, payloadInput, storeToFile
         });
     });
 
+    // see request.on('connect') : https://nodejs.org/api/http.html#http_event_connect
     request.on('error', (e) => {
         console.error(`problem with request: ${e.message}`);
     });
 
+    //let wholeSize = bundleAuthorSize + manifestSize + payloadFilesize;
     let wholeSize = Buffer.byteLength(postData);
 
-    //request.setHeader('Content-Type', 'multipart/form-data; boundary="' + boundary + '"');
-    request.setHeader('Content-Type', 'multipart/form-data; boundary=' + boundary);
     request.setHeader('Content-Length', wholeSize);
+    request.setHeader('Content-Type', 'multipart/form-data; boundary=' + boundary);
+    request.removeHeader('Connection');
     request.write(postData);
 
     console.log("******Going to send the following request: ****************************");
