@@ -17,28 +17,62 @@ const blankKeyRing = {
 };
 
 
-function getAndStoreMyKeyRingID() {
-    getMyKeyRingIdentity(setMyKeyring)
-}
+function getKeyRingFrom(keyringResponse) {
 
-function getMyKeyRingIdentity (callback){
-    //  https://github.com/servalproject/serval-dna/blob/development/doc/REST-API-Keyring.md#keyring-json-result
-    sendGETMessageToServal("localhost",4110,"/restful/keyring/identities.json", callback(response));
-}
-
-function setMyKeyring(response) {
-
-    let myKeyRing = JSON.parse(response);
-    // console.log("Parsed response keyring contains:");
-    // console.log(Util.inspect(myKeyRing));
+    let myRetrievedKeyRing = JSON.parse(keyringResponse);
 
     let myKeyRingID = blankKeyRing;
-    myKeyRingID.identity.sid = myKeyRing.rows[0][0];
-    myKeyRingID.identity.identity = myKeyRing.rows[0][1];
-    myKeyRingID.identity.did = myKeyRing.rows[0][2];
-    myKeyRingID.identity.name = myKeyRing.rows[0][3];
-    // console.log("myKeyRingID: " + Util.inspect(myKeyRingID));
+    myKeyRingID.identity.sid = myRetrievedKeyRing.rows[0][0];
+    myKeyRingID.identity.identity = myRetrievedKeyRing.rows[0][1];
+    myKeyRingID.identity.did = myRetrievedKeyRing.rows[0][2];
+    myKeyRingID.identity.name = myRetrievedKeyRing.rows[0][3];
+    return myKeyRingID;
 }
+
+module.exports.getMyKeyRingIdentity = function (){
+    return new Promise(
+        function (fulfill, reject) {
+
+            let path = "/restful/keyring/identities.json";
+            sendGETMessageToServal(path, function(err, res) {
+                if (err) {
+                    console.log("Keyring-request was rejected! Keyring: " + Util.inspect(res));
+                    reject(err);
+                } else {
+                    let myKeyRing = getKeyRingFrom(res);
+                    fulfill(myKeyRing);
+                }
+            });
+        }
+    )
+};
+
+module.exports.showBundle= function(forBID) {
+    let path = "/restful/rhizome/" + forBID + "/raw.bin";
+    sendGETMessageToServal(path, (response) => {
+        console.log(Util.inspect(response));
+    });
+};
+
+module.exports.getLatestBundles= function (sinceBID, callback){
+    let path = "/restful/rhizome/newsince/" + sinceBID + "/bundlelist.json";
+    sendGETMessageToServal(path, (response) => {
+        readAndShowLastestBundle(response.body, callback)
+    });
+};
+
+function readAndShowLastestBundle(bundleList, callback){
+    console.log(bundleList);
+    if (bundleList.hasOwnProperty('rows')) {
+        if (bundleList.rows.cou > 0) {
+            callback(bundleList.rows[0][1]);
+        }
+    }
+
+
+    callback(false);
+}
+
 
 function sendGETMessageToServal(path, callback) {
 
@@ -65,36 +99,14 @@ function sendGETMessageToServal(path, callback) {
             body += chunk;
         });
         response.on('end', () => {
-            callback(body);
+            //console.log("REQUEST SUCCESS: Retrieval returning result: " + body);
+            callback(null, body);
         });
     });
-
     request.on('error', (e) => {
-        console.error(`problem with request: ${e.message}`);
+        console.error(`REQUEST ERROR: problem with request: ${e.message}`);
+        callback(e, null);
     });
     request.end();
-}
-
-module.exports.showBundle= function(forBID) {
-    sendGETMessageToServal("/restful/rhizome/" + forBID + "/raw.bin", (response) => {
-        console.log(Util.inspect(response));
-    });
-};
-
-module.exports.getLatestBundles= function (sinceBID, callback){
-    sendGETMessageToServal("/restful/rhizome/newsince/" + sinceBID + "/bundlelist.json", (response) => {
-        readAndShowLastestBundle(response.body, callback)
-    });
-};
-
-function readAndShowLastestBundle(bundleList, callback){
-    console.log(bundleList);
-    if (bundleList.hasOwnProperty('rows')) {
-        if (bundleList.rows.cou > 0) {
-            callback(bundleList.rows[0][1]);
-        }
-    }
-
-    callback(false);
 }
 

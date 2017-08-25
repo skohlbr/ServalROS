@@ -1,4 +1,7 @@
 const ServalGET = require('./GetRhizomeMessage');
+const ServalPOST = require('./PostInsertMessageToRhizome');
+const Util = require('util');
+
 const FsFile = require('./WriteToFile');
 
 const fileStoragePath = '/home/pi/tmp/';
@@ -7,28 +10,13 @@ const contentFilename = fileStoragePath + filename + ".json";
 const manifestFilename = fileStoragePath + filename + "Manifest.mnfs";
 
 module.exports.insertIntoServal= function (content, recipientSID){
-    let mySID;
-    ServalGET.getMyKeyRingIdentity( (result) => {
-        mySID = result;
-    });
 
     FsFile.writeToFile(content, fileNamePath);
 
-    let manifest = createIncompleteBroadcastManifest(mySID);
     FsFile.writeToFile(manifest, filename);
 
     invokeServalCLIinsert(mySID, contentFilename, manifestFilename);
 };
-
-function createIncompleteBroadcastManifest(forSID){
-    return 'sender=' + forSID + '\n' +
-    'crypt=0';
-}
-
-function createIncompleteRecipientManifest(fromAuthorSID, toRecipientSID) {
-    return 'recipient=' + toRecipientSID + '\n' +
-    createIncompleteBroadcastManifest(fromAuthorSID);
-}
 
 function invokeServalCLIinsert(authorSID, contentFilePath, manifestFilePath){
     let exec = require('child_process').exec;
@@ -43,3 +31,23 @@ function invokeServalCLIinsert(authorSID, contentFilePath, manifestFilePath){
 
     });
 }
+
+function showResponse(responseBody) {
+
+    // Receive/handle response
+    console.log("******************************************************************************************************");
+    console.log("Tried to insert message into Serval. Whole response body from Serval REST API:");
+    console.log(Util.inspect(responseBody));
+    console.log("******************************************************************************************************");
+}
+
+// gets mySID, builds default manifest, puts everything together and "restful/rhizome/insert"s it
+module.exports.insertDefaultRhizomeBundle =
+    function insertDefaultRhizomeBundleWith(payload) {
+        ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
+            console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
+            console.log("Now trying to send POST message");
+
+            ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
+        })
+    };
