@@ -97,8 +97,6 @@ module.exports.sendRhizomeInsertPostMessage = function (mySID, payloadInput, cal
 
     let boundary = "--------------boundary" + Math.random().toString(8).replace(".","");
 
-    console.log("****************** HERE *************************");
-
     let postData = buildPostBody(mySID, boundary, payloadInput);
     let options = buildOptionsAndHeaders();
 
@@ -127,9 +125,11 @@ module.exports.sendRhizomeInsertPostMessage = function (mySID, payloadInput, cal
     request.removeHeader('Connection');
     request.write(postData);
 
+    /*
     console.log("******Going to send the following request: ****************************");
     console.log(Util.inspect(request));
     console.log("******END OF REQUEST TO SEND ****************************");
+     */
 
     request.end();
 };

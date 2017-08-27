@@ -1,4 +1,4 @@
-module.exports.createJsonArrayFrom = function (jsonTable) {
+module.exports.createJsonArrayFromJsonTable = function (jsonTable) {
     let headerItemCount = jsonTable.header.length;
     let rowCount = jsonTable.rows.length;
     if (rowCount <= 0) {return "{ }"}

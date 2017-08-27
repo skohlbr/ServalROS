@@ -36,7 +36,7 @@ function showResponse(responseBody) {
 
     // Receive/handle response
     console.log("******************************************************************************************************");
-    console.log("Tried to insert message into Serval. Whole response body from Serval REST API:");
+    console.log("Inserted:");
     console.log(Util.inspect(responseBody));
     console.log("******************************************************************************************************");
 }
@@ -45,8 +45,8 @@ function showResponse(responseBody) {
 module.exports.insertDefaultRhizomeBundle =
     function insertDefaultRhizomeBundleWith(payload) {
         ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
-            console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
-            console.log("Now trying to send POST message");
+            // console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
+            // console.log("Now trying to send POST message");
 
             ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
         })
