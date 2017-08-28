@@ -41,6 +41,11 @@ function showResponse(responseBody) {
     console.log("******************************************************************************************************");
 }
 
+
+module.exports.updateFileRhizomeBundle = function () {
+    
+}
+
 // gets mySID, builds default manifest, puts everything together and "restful/rhizome/insert"s it
 module.exports.insertDefaultRhizomeBundle =
     function insertDefaultRhizomeBundleWith(payload) {
@@ -51,3 +56,4 @@ module.exports.insertDefaultRhizomeBundle =
             ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
         })
     };
+

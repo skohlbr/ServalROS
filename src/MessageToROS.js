@@ -5,7 +5,7 @@ require("./lib/eventemitter2.min.js");
 
 const Util = require("util");
 const ROSLIB = require("../roslibjs-develop/src/core/index");
-const ComCenter = require("./CommandCenterMessageTypes");
+const ComCenterMsg = require("./CommandCenterMessageTypes");
 
 // Connecting to ROS
 // -----------------
@@ -95,37 +95,36 @@ function moveToGoalPose(pose) {
     cmdVel.publish(goalPoseMsg);
 }
 
+function parseMessage(messageString) {
+    // console.log("Handling incoming ROS messageString: \n" + Util.inspect(messageString));
+    let newMsg = ComCenterMsg.EmptyRosPhotoMessage;
+    let msgArray = messageString.split(";");
+
+    newMsg.manifestAppendix = buildManifestAppendixFrom(msgArray, 2);
+    if (!newMsg.manifestAppendix) {return false}
+
+    newMsg.command = msgArray[0];
+    newMsg.path = msgArray[1];
+    newMsg.filename = msgArray[2];
+    return newMsg;
+}
 
 function handleIncomingRosMessage(messageString) {
 
-    // example:
-    // UPDATE_FILE;/tmp/ugv001;filename=map.png;map_resolution=0.05;map_origin_pos_x=-2.5;map_origin_pos_y=-2.5
-    // CREATE_FILE;/tmp/ugv001;filename=map.png;map_resolution=0.05;map_origin_pos_x=-2.5;map_origin_pos_y=-2.5
+    let newMsg = parseMessage(messageString);
+    if (!newMsg) {return false}
 
-    console.log("Handling incoming ROS messageString: \n" + Util.inspect(messageString));
-
-    let msgArray = messageString.split(";");
-
-    let manifestAppendix = buildManifestAppendixFrom(msgArray, {beginAtLineOffset: 2});
-    if (!manifestAppendix) {return false}
-
-    let command = msgArray[0];
-    let path = msgArray[1];
-    let filename = msgArray[2];
-
+    // TODO: Responsibility?? Move this out of this module?!? This is about messaging to serval.
     switch (command)  {
         // TODO: Build these methods
-        case "UPDATE_FILE" : Serval.updateFileRhizomeBundle(path, filename, manifestAppendix); break;
-        case "CREATE_FILE" : Serval.insertFileRhizomeBundle(path, filename, manifestAppendix); break;
+        case "UPDATE_FILE" : Serval.updateFileRhizomeBundle(newMsg); break;
+        case "CREATE_FILE" : Serval.insertFileRhizomeBundle(newMsg); break;
         default : return false
     }
-
-    // TODO: use different insert-call that allows to modify manifest
-    Serval.insertDefaultRhizomeBundle(messageString);
-
 }
 
 function buildManifestAppendixFrom(msgArray, beginAtLineOffset){
+    if (!Array.isArray(msgArray)) {return false}
     let aLen = msgArray.length;
     if (aLen <= 0) {return false}
 
@@ -138,6 +137,10 @@ function buildManifestAppendixFrom(msgArray, beginAtLineOffset){
 
     let manifestAppendix = "";
     for (let line in msgAppendixArray) {
-        manifestAppendix += line + "\r\n";
+        manifestAppendix += msgAppendixArray[line] + "\r\n";
     }
+    return manifestAppendix;
 }
+
+module.exports.parseMessage = parseMessage;
+module.exports.handleIncomingRosMessage = handleIncomingRosMessage;
