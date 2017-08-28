@@ -6,21 +6,17 @@ function validateObjectHasStructure (blankMsgWithRequiredFields, msgToValidate) 
 
         if (blankMsgWithRequiredFields.hasOwnProperty(key) && msgToValidate.hasOwnProperty(key)) {
 
-            console.log(
-                "Key: " + key + " , " +
-                "ValueBlank: " + blankMsgWithRequiredFields[key]+ " , " +
-                "ValueNew: " + msgToValidate[key]
-            );
+            // console.log("Key: " + key + " , " + "ValueBlank: " + blankMsgWithRequiredFields[key]+ " , " + "ValueNew: " + msgToValidate[key]);
 
             if (typeof blankMsgWithRequiredFields[key] === 'object') {
-                console.log("Analyzing sub-object: " + key);
+                // console.log("Analyzing sub-object: " + key);
                 let defResult = validateObjectHasStructure(blankMsgWithRequiredFields[key], msgToValidate[key]);
                 result = result && defResult && (defResult !== undefined);
-                console.log("Subobject valid: " + result);
+                //console.log("Subobject valid: " + result);
             }
 
         } else {
-            console.log("Fail at " + key);
+            //console.log("Fail at " + key);
             result = false;
         }
     });
