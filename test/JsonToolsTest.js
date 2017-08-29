@@ -11,22 +11,6 @@ const exampleBundleList =
     }
 ;
 
-const blankBundle = {
-    ".token": "",
-    "_id": 0,
-    "service": "rhizome",
-    "id": "0",
-    "version": 0,
-    "date": 0,
-    ".inserttime": 0,
-    ".author": "",
-    ".fromhere": 0,
-    "filesize": 0,
-    "filehash": "",
-    "sender": "",
-    "recipient": null,
-    "name": ""}
-;
 
 
 const incompleteJsonEmptyDatabase = '{"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],';

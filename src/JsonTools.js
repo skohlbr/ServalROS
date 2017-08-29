@@ -26,7 +26,6 @@ function createJsonArrayFromJsonTable (jsonTable) {
     return bundles;
 }
 
-
 function checkAndRepairJsonBundleList(inputString){
     const expectedBeginChars = '{';
     const rows = '"rows":[';

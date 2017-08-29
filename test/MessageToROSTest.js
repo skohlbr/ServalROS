@@ -1,10 +1,11 @@
+require('mocha');
+let expect = require('chai').expect;
+
 const Util = require("util");
 const MsgToRos = require('../src/MessageToROS');
 const validate = require('../src/ObjectsComparison').validateObjectHasStructure;
 const ComCenterMsg = require('../src/CommandCenterMessageTypes');
 
-require('mocha');
-let expect = require('chai').expect;
 
 // example:
 

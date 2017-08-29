@@ -17,7 +17,7 @@ const blankKeyRing = {
 };
 
 const blankProcessedBundle = {bid:0, version:0};
-let processedBundlesList = [];
+let processedBundlesList = [blankProcessedBundle];
 
 function getKeyRingFrom(keyringResponse) {
 
@@ -105,6 +105,7 @@ function simplifiedGetLatestBundle() {
                     if (!res.body.hasOwnProperty('rows')) {return false}
                     if (!res.body.rows[0]) {return false}
 
+                    // TODO: Change this to read, fix, manage (store: compare/add/update/drop), and process all the bundles
                     let latestBundle = incomingBundleList.rows[0];
 
                     console.log("Latest bundle is: " + latestBundle);

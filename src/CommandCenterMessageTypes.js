@@ -1,6 +1,24 @@
 
 module.exports.EmptyIncomingRosPhotoMessage = {command: "", path: "", filename:"", manifestAppendix:""};
 
+
+module.exports.blankBundle = {
+    ".token": "",
+    "_id": 0,
+    "service": "rhizome",
+    "id": "0",
+    "version": 0,
+    "date": 0,
+    ".inserttime": 0,
+    ".author": "",
+    ".fromhere": 0,
+    "filesize": 0,
+    "filehash": "",
+    "sender": "",
+    "recipient": null,
+    "name": ""}
+;
+
 module.exports.MoveToCommand=
     {
         "messageType" : "move-to",
