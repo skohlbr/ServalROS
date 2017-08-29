@@ -1,4 +1,5 @@
-module.exports.EmptyRosPhotoMessage = {command: "", path: "", filename:"", manifestAppendix:""};
+
+module.exports.EmptyIncomingRosPhotoMessage = {command: "", path: "", filename:"", manifestAppendix:""};
 
 module.exports.MoveToCommand=
     {
