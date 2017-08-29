@@ -38,7 +38,8 @@ module.exports.getMyKeyRingIdentity = function (){
             let path = "/restful/keyring/identities.json";
             sendGETMessageToServal(path, function(err, res) {
                 if (err) {
-                    console.log("Keyring-request was rejected! Keyring: " + Util.inspect(res));
+                    console.log("Request to " + path + "yields:");
+                    console.log(Util.inspect(res));
                     reject(err);
                 } else {
                     let myKeyRing = getKeyRingFrom(res);
@@ -85,20 +86,33 @@ function readAndShowLastestBundle(bundleList, callback){
 }
 
 function simplifiedGetLatestBundle() {
-    let path = '/restful/rhizome/bundlelist.json';
-    sendGETMessageToServal(path, (response) => {
-        console.log(Util.inspect(response));
+    return new Promise(
+        function (fulfill, reject) {
 
-        if (!response.hasOwnProperty('body')) {return false}
-        let incomingBundleList = response.body;
+            let path = '/restful/rhizome/bundlelist.json';
+            sendGETMessageToServal(path, function(err, res) {
+                if (err) {
+                    console.log("Request to " + path + "yields:");
+                    console.log(Util.inspect(res));
+                    reject(err);
+                } else {
+                    console.log("BundleList Response is: ");
+                    console.log(Util.inspect(res));
 
-        if (!response.body.hasOwnProperty('rows')) {return false}
-        if (!response.body.rows[0]) {return false}
-        let latestBundle = incomingBundleList.rows[0];
+                    if (!res.hasOwnProperty('body')) {return false}
+                    let incomingBundleList = res.body;
 
-        console.log("Latest bundle is: " + latestBundle);
-        return latestBundle;
-    });
+                    if (!res.body.hasOwnProperty('rows')) {return false}
+                    if (!res.body.rows[0]) {return false}
+
+                    let latestBundle = incomingBundleList.rows[0];
+
+                    console.log("Latest bundle is: " + latestBundle);
+                    fulfill(latestBundle);
+                }
+            });
+        }
+    );
 }
 
 function sendGETMessageToServal(path, callback) {

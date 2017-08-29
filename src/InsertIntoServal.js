@@ -9,6 +9,7 @@ const filename = "joesExample";
 const contentFilename = fileStoragePath + filename + ".json";
 const manifestFilename = fileStoragePath + filename + "Manifest.mnfs";
 
+/*
 module.exports.insertIntoServal= function (content, recipientSID){
 
     FsFile.writeToFile(content, fileNamePath);
@@ -31,6 +32,7 @@ function invokeServalCLIinsert(authorSID, contentFilePath, manifestFilePath){
 
     });
 }
+*/
 
 function showResponse(responseBody) {
 
@@ -41,19 +43,28 @@ function showResponse(responseBody) {
     console.log("******************************************************************************************************");
 }
 
-
 module.exports.updateFileRhizomeBundle = function () {
-    
-}
+
+};
 
 // gets mySID, builds default manifest, puts everything together and "restful/rhizome/insert"s it
-module.exports.insertDefaultRhizomeBundle =
-    function insertDefaultRhizomeBundleWith(payload) {
-        ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
-            // console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
-            // console.log("Now trying to send POST message");
+function insertDefaultRhizomeBundleWith(payload) {
+    ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
+        // console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
+        // console.log("Now trying to send POST message");
 
-            ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
-        })
-    };
+        ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
+    })
+}
 
+function updateFileRhizomeBundle(msg) {
+    console.log("Dummy for updating received message: " + Util.inspect(msg));
+}
+
+function insertFileRhizomeBundle(msg) {
+
+}
+
+module.exports.insertFileRhizomeBundle = insertFileRhizomeBundle;
+module.exports.updateFileRhizomeBundle = updateFileRhizomeBundle;
+module.exports.getLatestBundle = ServalGET.simplifiedGetLatestBundle;

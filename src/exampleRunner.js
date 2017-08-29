@@ -1,8 +1,8 @@
-const Rhizome = require('./InsertIntoServal');
-
 // RhizomeGET.getBundle("CC33880E952D5A2837A639A65FBD65D609FC7C0DF8D0D788BA9D94EE57B2A3F7");
-// RhizomeGET.getLatestBundles();
+const Serval = require('./InsertIntoServal');
+const Util = require("util");
 
+/*
 let i = 0 ;
 while (i < 10) {
     Rhizome.insertDefaultRhizomeBundle('{messageType:"echotest", messageText:"This is a echo-test! ' + Date.now() + ":" + i + '"}');
@@ -10,6 +10,7 @@ while (i < 10) {
     console.log("Increasing i to " + i);
 }
 
+*/
 
 // Test runs including keyring retrieval for each insertion:
 // Test 1:
