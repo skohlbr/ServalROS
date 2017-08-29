@@ -11,6 +11,13 @@ const Serval = require('./InsertIntoServal');
 // RosMsg.subscribeToDefaultTopic(handleIncomingRosMessage);
 // RosMsg.moveToGoalPoseForPhoto(12,34,56);
 
+let stopFlag = false;
+RosMsg.connectToRos();
 
+
+while (!stopFlag) {
+
+
+}
 
 

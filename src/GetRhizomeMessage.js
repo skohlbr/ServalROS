@@ -16,6 +16,8 @@ const blankKeyRing = {
     }
 };
 
+const blankProcessedBundle = {bid:0, version:0};
+let processedBundlesList = [];
 
 function getKeyRingFrom(keyringResponse) {
 
@@ -47,12 +49,22 @@ module.exports.getMyKeyRingIdentity = function (){
     )
 };
 
-module.exports.showBundle= function(forBID) {
+function getBundle (forBID) {
     let path = "/restful/rhizome/" + forBID + "/raw.bin";
     sendGETMessageToServal(path, (response) => {
         console.log(Util.inspect(response));
+        return response.body;
     });
-};
+}
+
+
+function getBundleList() {
+    let path = '/restful/rhizome/bundlelist.json';
+    sendGETMessageToServal(path, (response) => {
+        console.log(Util.inspect(response));
+        return response.body;
+    });
+}
 
 module.exports.getLatestBundles= function (sinceBID, callback){
     let path = "/restful/rhizome/newsince/" + sinceBID + "/bundlelist.json";
@@ -64,22 +76,37 @@ module.exports.getLatestBundles= function (sinceBID, callback){
 function readAndShowLastestBundle(bundleList, callback){
     console.log(bundleList);
     if (bundleList.hasOwnProperty('rows')) {
-        if (bundleList.rows.cou > 0) {
+        if (bundleList.rows.length > 0) {
             callback(bundleList.rows[0][1]);
         }
     }
 
-
     callback(false);
 }
 
+function simplifiedGetLatestBundle() {
+    let path = '/restful/rhizome/bundlelist.json';
+    sendGETMessageToServal(path, (response) => {
+        console.log(Util.inspect(response));
+
+        if (!response.hasOwnProperty('body')) {return false}
+        let incomingBundleList = response.body;
+
+        if (!response.body.hasOwnProperty('rows')) {return false}
+        if (!response.body.rows[0]) {return false}
+        let latestBundle = incomingBundleList.rows[0];
+
+        console.log("Latest bundle is: " + latestBundle);
+        return latestBundle;
+    });
+}
 
 function sendGETMessageToServal(path, callback) {
 
-    hostname = "localhost";
-    port = 4110;
+    let hostname = "localhost";
+    let port = 4110;
     const authString = "harry:potter";
-    const authStringEnc = "Basic " + (new Buffer("harry:potter").toString('base64'));
+    const authStringEnc = "Basic " + (new Buffer(authString).toString('base64'));
 
     const options = {
         hostname: hostname,
@@ -109,4 +136,8 @@ function sendGETMessageToServal(path, callback) {
     });
     request.end();
 }
+
+module.exports.getBundle= getBundle;
+module.exports.getBundleList= getBundleList;
+module.exports.simplifiedGetLatestBundle = simplifiedGetLatestBundle;
 
