@@ -13,15 +13,16 @@ const Serval = require('./InsertIntoServal');
 let stopFlag = false;
 //RosMsg.connectToRos();
 
-
 // check every 5 seconds
 let intervalInMs = 5000;
+
+let newSinceToken = "";
 
 // bundlelist polling loop
 let pollingClient = setInterval(() => {
     Serval.getLatestBundle().then((latestBundle) => {
-        console.log("\n" + Date.now() + ":\n" + Util.inspect(latestBundle));
-        RosMsg.handleIncomingRosMessage(latestBundle);
+
+
     })
 }, intervalInMs);
 
