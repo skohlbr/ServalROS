@@ -12,7 +12,7 @@ const Serval = require('./InsertIntoServal');
 // -----------------
 
 let ros = new ROSLIB.Ros({
-    url : 'ws://localhost:9091'
+    url : 'ws://10.0.0.102:9091' // Robot ip address
 });
 
 ros.on('connection', function() {
@@ -38,14 +38,14 @@ module.exports.subscribeToDefaultTopic = subscribeToDefaultTopic;
 function subscribeToDefaultTopicWithCallback(messageHandlerCallback) {
     let listener = new ROSLIB.Topic({
         ros : ros,
-        name : '/listener',
+        name : '/serval_update',
         messageType : 'std_msgs/String'
     });
 
     listener.subscribe(function(message) {
         console.log('Received message on ' + listener.name + ': ' + message.data);
         messageHandlerCallback(message.data);
-        listener.unsubscribe(); // TODO: is this necessary??
+        listener.unsubscribe();
     });
 }
 
