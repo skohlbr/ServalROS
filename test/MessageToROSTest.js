@@ -17,12 +17,12 @@ describe('MessageToROS', function() {
     describe('#validateObjectHasStructure()', function () {
         it('should parse an incoming CREATE message as expected', function () {
             let parsedMsg = MsgToRos.parseMessage(testMsgCreate);
-            let res = validate(ComCenterMsg.EmptyRosPhotoMessage, parsedMsg);
+            let res = validate(ComCenterMsg.EmptyIncomingRosPhotoMessage, parsedMsg);
             expect(res).to.be.true;
         });
         it('should parse an incoming UPDATE message as expected', function () {
             let parsedMsg = MsgToRos.parseMessage(testMsgUpdate);
-            let res = validate(ComCenterMsg.EmptyRosPhotoMessage, parsedMsg);
+            let res = validate(ComCenterMsg.EmptyIncomingRosPhotoMessage, parsedMsg);
             expect(res).to.be.true;
         });
         it('should build an MANIFEST APPENDIX for an incoming UPDATE message as expected', function () {

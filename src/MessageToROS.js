@@ -6,45 +6,48 @@ require("./lib/eventemitter2.min.js");
 const Util = require("util");
 const ROSLIB = require("../roslibjs-develop/src/core/index");
 const ComCenterMsg = require("./CommandCenterMessageTypes");
+const Serval = require('./InsertIntoServal');
 
 // Connecting to ROS
 // -----------------
 
-module.exports.connectToRos = function () {
+let ros = new ROSLIB.Ros({
+    url : 'ws://10.0.0.102:9091' // Robot ip address
+});
 
-    let ros = new ROSLIB.Ros({
-        url : 'ws://localhost:9091'
-    });
+ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+});
 
-    ros.on('connection', function() {
-        console.log('Connected to websocket server.');
-    });
+ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+});
 
-    ros.on('error', function(error) {
-        console.log('Error connecting to websocket server: ', error);
-    });
-
-    ros.on('close', function() {
-        console.log('Connection to websocket server closed.');
-    });
-
-};
+ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+});
 
 // SUBSCRIBE & LISTEN
 
-module.exports.subscribeToDefaultTopic = function (messageHandlerCallback) {
+
+function subscribeToDefaultTopic() {
+    subscribeToDefaultTopicWithCallback(handleIncomingRosToServalMessage);
+}
+module.exports.subscribeToDefaultTopic = subscribeToDefaultTopic;
+
+function subscribeToDefaultTopicWithCallback(messageHandlerCallback) {
     let listener = new ROSLIB.Topic({
         ros : ros,
-        name : '/listener',
+        name : '/serval_update',
         messageType : 'std_msgs/String'
     });
 
     listener.subscribe(function(message) {
         console.log('Received message on ' + listener.name + ': ' + message.data);
         messageHandlerCallback(message.data);
-        listener.unsubscribe(); // TODO: is this necessary??
+        listener.unsubscribe();
     });
-};
+}
 
 
 const blankPose = {
@@ -100,7 +103,7 @@ function moveToGoalPose(pose) {
 
 function parseMessage(messageString) {
     // console.log("Handling incoming ROS messageString: \n" + Util.inspect(messageString));
-    let newMsg = ComCenterMsg.EmptyRosPhotoMessage;
+    let newMsg = ComCenterMsg.EmptyIncomingRosPhotoMessage;
     let msgArray = messageString.split(";");
 
     newMsg.manifestAppendix = buildManifestAppendixFrom(msgArray, 2);
@@ -110,20 +113,6 @@ function parseMessage(messageString) {
     newMsg.path = msgArray[1];
     newMsg.filename = msgArray[2];
     return newMsg;
-}
-
-function handleIncomingRosMessage(messageString) {
-
-    let newMsg = parseMessage(messageString);
-    if (!newMsg) {return false}
-
-    // TODO: Responsibility?? Move this out of this module?!? This is about messaging to serval.
-    switch (command)  {
-        // TODO: Build these methods
-        case "UPDATE_FILE" : Serval.updateFileRhizomeBundle(newMsg); break;
-        case "CREATE_FILE" : Serval.insertFileRhizomeBundle(newMsg); break;
-        default : return false
-    }
 }
 
 function buildManifestAppendixFrom(msgArray, beginAtLineOffset){
@@ -145,5 +134,19 @@ function buildManifestAppendixFrom(msgArray, beginAtLineOffset){
     return manifestAppendix;
 }
 
+
+function handleIncomingRosToServalMessage(messageString) {
+
+    let newMsg = parseMessage(messageString);
+    if (!newMsg) {return false}
+
+    switch (newMsg.command)  {
+
+        case "UPDATE_FILE" : Serval.updateFileRhizomeBundle(newMsg); break;
+        case "CREATE_FILE" : Serval.insertFileRhizomeBundle(newMsg); break;
+        default : return false
+    }
+}
+
 module.exports.parseMessage = parseMessage;
-module.exports.handleIncomingRosMessage = handleIncomingRosMessage;
+module.exports.handleIncomingRosMessage = handleIncomingRosToServalMessage;
