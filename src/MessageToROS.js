@@ -6,7 +6,7 @@ require("./lib/eventemitter2.min.js");
 const Util = require("util");
 const ROSLIB = require("../roslibjs-develop/src/core/index");
 const ComCenterMsg = require("./CommandCenterMessageTypes");
-const Serval = require('./InsertIntoServal');
+const Serval = require('./ServalMessages');
 
 // Connecting to ROS
 // -----------------

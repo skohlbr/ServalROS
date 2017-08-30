@@ -15,6 +15,10 @@ const exampleBundleList =
 
 const incompleteJsonEmptyDatabase = '{"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],';
 
+const completeJSONEmptyDatabase = '{\n"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],\n"rows":[\n]\n}\n';
+
+
+
 const incompleteJsonOpenEnd = '{\n' +
     '"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],\n' +
     '"rows":[\n' +
@@ -79,8 +83,10 @@ describe('JsonTools', function() {
             let res = JsonTools.checkAndRepairJsonBundleList(incompleteJsonLostBeginning);
             expect(res[0].hasOwnProperty('version')).to.be.true;
         });
+        it('should fail for complete but empty list', function () {
+            let res = JsonTools.checkAndRepairJsonBundleList(completeJSONEmptyDatabase);
+            expect(res).to.be.false;
+        });
 
     });
 });
-
-// expect

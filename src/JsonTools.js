@@ -29,24 +29,31 @@ function createJsonArrayFromJsonTable (jsonTable) {
 function checkAndRepairJsonBundleList(inputString){
     const expectedBeginChars = '{';
     const rows = '"rows":[';
+    const emptyRows = '"rows":[]';
     const expectedFinalChars =  ']}';
     const openEnd = "],";
     const fullHeader = '{"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],"rows":[';
 
     if (!inputString) {return false}
 
-    let tempString = inputString.replace("\n","");
+    let tempString = inputString.replace(/\n/g, "");
 
-    if (inputString.includes(expectedBeginChars)){
+    let res = false;
+    if (tempString.includes(expectedBeginChars)){
 
-        if (!tempString.includes(rows)) {
+        if (!(tempString.includes(rows))) {
             // EMPTY DATABASE
             return false
         }
 
-        if (inputString.endsWith(expectedFinalChars)) {
+        if (tempString.includes(emptyRows)) {
+            // EMPTY DATABASE, COMPLETE JSON
+            return false
+        }
+
+        if (tempString.endsWith(expectedFinalChars)) {
             // COMPLETE
-            return inputString
+            res = tempString
         } else {
             // ADD MISSING TAIL
             let posOfOpenEnd = tempString.lastIndexOf(openEnd);
@@ -59,7 +66,6 @@ function checkAndRepairJsonBundleList(inputString){
     }
 
     // drop everything after open end
-    let res;
 
     try {
         let intermediateJSON = JSON.parse(tempString);

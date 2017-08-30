@@ -1,5 +1,5 @@
-const RhizomePOST = require('../src/PostInsertMessageToRhizome');
-const RhizomeGET = require('../src/GetRhizomeMessage');
+const RhizomePOST = require('../src/ServalPOSTMessages');
+const RhizomeGET = require('../src/ServalGETMessages');
 
 require('mocha');
 let expect = require('chai').expect;
@@ -9,7 +9,10 @@ const knownExistingBundleID = "CC33880E952D5A2837A639A65FBD65D609FC7C0DF8D0D788B
 describe('RhizomeGET', function() {
     describe('#hasMsgType()', function () {
         it('should detect missing msgType field', function () {
-            RhizomeGET.getLatestBundles(knownExistingBundleID).then((res) => {if (!res) {done(true)} else {done()}});
+            RhizomeGET.getLatestBundles(knownExistingBundleID).then((res) => {
+                if (!res) {done(true)}
+                else {done()}
+            });
         });
         it('should confirm existing msgType field', function () {
 

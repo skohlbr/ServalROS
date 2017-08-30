@@ -4,6 +4,7 @@
 
 let http = require('http');
 const Util = require("util");
+const JsonTools = require('./JsonTools');
 
 const blankKeyRing = {
     "http_status_code": "",
@@ -34,11 +35,10 @@ function getKeyRingFrom(keyringResponse) {
 module.exports.getMyKeyRingIdentity = function (){
     return new Promise(
         function (fulfill, reject) {
-
             let path = "/restful/keyring/identities.json";
             sendGETMessageToServal(path, function(err, res) {
                 if (err) {
-                    console.log("Request to " + path + "yields:");
+                    console.log("ERROR: Request to " + path + " yields:");
                     console.log(Util.inspect(res));
                     reject(err);
                 } else {
@@ -47,34 +47,85 @@ module.exports.getMyKeyRingIdentity = function (){
                 }
             });
         }
-    )
+    );
 };
 
-function getBundle (forBID) {
-    let path = "/restful/rhizome/" + forBID + "/raw.bin";
-    sendGETMessageToServal(path, (response) => {
-        console.log(Util.inspect(response));
-        return response.body;
-    });
-}
+module.exports.getBundle = function (forBID) {
+    return new Promise(
+        function (fulfill, reject) {
+            if (!forBID) {return false}
+
+            let path = "/restful/rhizome/" + forBID + "/raw.bin";
+            sendGETMessageToServal(path, function(err, res) {
+                if (err) {reject(err)}
+                console.log("Received Bundle:");
+                console.log(Util.inspect(res));
+                fulfill(res);
+            });
+        }
+    );
+};
 
 
 function getBundleList() {
     let path = '/restful/rhizome/bundlelist.json';
-    sendGETMessageToServal(path, (response) => {
-        console.log(Util.inspect(response));
-        return response.body;
+    sendGETMessageToServal(path, function(err, res) {
+        if (err) {reject(err)}
+        console.log(Util.inspect(res));
+        return res.body;
     });
+}
+
+
+module.exports.simplifiedGetVeryLatestBundleID= function () {
+    return new Promise(
+        function (fulfill, reject) {
+            let path = '/restful/rhizome/bundlelist.json';
+            sendGETMessageToServal(path, function(err, res) {
+                if (err) {
+                    console.log("**************** ERROR: Request to " + path + " yields:");
+                    console.log(Util.inspect(res));
+                    reject(err);
+                } else {
+
+                    let fixedBundleList = JsonTools.checkAndRepairJsonBundleList(res);
+                    if (!fixedBundleList ) {
+                        console.log("**************** Broken BundleList Response: Response is: ");
+                        console.log(Util.inspect(res));
+                        reject(res)
+                    } else {
+
+                        // TODO: Change this to read, fix, manage (store: compare/add/update/drop), and process all the bundles
+                        let latestBundleID = fixedBundleList[0].id;
+
+                        console.log("Latest bundle is: " + latestBundleID);
+                        fulfill(latestBundleID);
+
+                    }
+
+                }
+            });
+        }
+    );
+};
+
+function mayTryToTouchBundleList(res) {
+    if (!res.hasOwnProperty('body')) {return false}
+    if (!res.body.hasOwnProperty('rows')) {return false}
+    if (!res.body.rows[0]) {return false}
+
+    // TODO: Write test for this function! Need more invalidators?
+    return true
 }
 
 module.exports.getLatestBundles= function (sinceBID, callback){
     let path = "/restful/rhizome/newsince/" + sinceBID + "/bundlelist.json";
     sendGETMessageToServal(path, (response) => {
-        readAndShowLastestBundle(response.body, callback)
+        readAndShowLatestBundle(response.body, callback)
     });
 };
 
-function readAndShowLastestBundle(bundleList, callback){
+function readAndShowLatestBundle(bundleList, callback){
     console.log(bundleList);
     if (bundleList.hasOwnProperty('rows')) {
         if (bundleList.rows.length > 0) {
@@ -85,39 +136,8 @@ function readAndShowLastestBundle(bundleList, callback){
     callback(false);
 }
 
-function simplifiedGetLatestBundle() {
-    return new Promise(
-        function (fulfill, reject) {
-
-            let path = '/restful/rhizome/bundlelist.json';
-            sendGETMessageToServal(path, function(err, res) {
-                if (err) {
-                    console.log("Request to " + path + "yields:");
-                    console.log(Util.inspect(res));
-                    reject(err);
-                } else {
-                    console.log("BundleList Response is: ");
-                    console.log(Util.inspect(res));
-
-                    if (!res.hasOwnProperty('body')) {return false}
-                    let incomingBundleList = res.body;
-
-                    if (!res.body.hasOwnProperty('rows')) {return false}
-                    if (!res.body.rows[0]) {return false}
-
-                    // TODO: Change this to read, fix, manage (store: compare/add/update/drop), and process all the bundles
-                    let latestBundle = incomingBundleList.rows[0];
-
-                    console.log("Latest bundle is: " + latestBundle);
-                    fulfill(latestBundle);
-                }
-            });
-        }
-    );
-}
 
 function sendGETMessageToServal(path, callback) {
-
     let hostname = "localhost";
     let port = 4110;
     const authString = "harry:potter";
@@ -146,13 +166,9 @@ function sendGETMessageToServal(path, callback) {
         });
     });
     request.on('error', (e) => {
-        console.error(`REQUEST ERROR: problem with request: ${e.message}`);
+        console.error('ERROR: REQUEST ERROR: problem with request: ' + e.message);
         callback(e, null);
     });
     request.end();
 }
-
-module.exports.getBundle= getBundle;
-module.exports.getBundleList= getBundleList;
-module.exports.simplifiedGetLatestBundle = simplifiedGetLatestBundle;
 

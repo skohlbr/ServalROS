@@ -39,7 +39,7 @@ function buildPostBody(mySID, boundary, payloadInput) {
 
     let manifest =
         'service=rhizome' + crlf +
-        'name=myAwesomeExample' + crlf +
+        'name=myAwesomeExample' + Date.now() + crlf +
         'sender=' + mySID + crlf +
         'crypt=0' + crlf;
     let manifestSize = Buffer.byteLength(manifest);

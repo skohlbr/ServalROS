@@ -2,7 +2,7 @@
 module.exports.EmptyIncomingRosPhotoMessage = {command: "", path: "", filename:"", manifestAppendix:""};
 
 
-module.exports.blankBundle = {
+module.exports.blankManifest = {
     ".token": "",
     "_id": 0,
     "service": "rhizome",
@@ -17,6 +17,11 @@ module.exports.blankBundle = {
     "sender": "",
     "recipient": null,
     "name": ""}
+;
+
+module.exports.blankBundle = {
+    payload: ""
+}
 ;
 
 module.exports.MoveToCommand=
