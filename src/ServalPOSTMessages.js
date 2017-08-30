@@ -5,7 +5,12 @@
 let http = require('http');
 const Util = require("util");
 
-function buildPostBody(mySID, boundary, payloadInput) {
+function buildBoundary() {
+    return "--------------boundary" + Math.random().toString(8).replace(".", "");
+}
+
+
+function buildPostBody(mySID, boundary, manifestExtension, payloadInput) {
     const crlf = "\r\n"; //String.fromCharCode(10); // use only \n as newline (UNIX style) .. using \r\n yields problems
 
     // create a 40 characters core-boundary
@@ -35,13 +40,11 @@ function buildPostBody(mySID, boundary, payloadInput) {
     }
     let payloadFilesize = Buffer.byteLength(payload);
 
-    // 'name=banana\n' + // in case file is added
-
     let manifest =
         'service=rhizome' + crlf +
-        'name=myAwesomeExample' + Date.now() + crlf +
         'sender=' + mySID + crlf +
-        'crypt=0' + crlf;
+        'crypt=0' + crlf +
+        manifestExtension + crlf;
     let manifestSize = Buffer.byteLength(manifest);
 
     let manifestHeader =
@@ -66,7 +69,6 @@ function buildPostBody(mySID, boundary, payloadInput) {
     postData += endBoundary;
     return postData;
 }
-
 
 function buildOptionsAndHeaders() {
     const authString = "harry:potter";
@@ -93,11 +95,13 @@ function buildOptionsAndHeaders() {
     return options;
 }
 
-module.exports.sendRhizomeInsertPostMessage = function (mySID, payloadInput, callback) {
+module.exports.sendRhizomeInsertPostMessage = function (mySID, manifestExtension, payloadInput, callback) {
 
-    let boundary = "--------------boundary" + Math.random().toString(8).replace(".","");
+    // TODO: build second method that takes completely new manifest instead of extension
 
-    let postData = buildPostBody(mySID, boundary, payloadInput);
+    let boundary = buildBoundary();
+
+    let postData = buildPostBody(mySID, boundary, manifestExtension, payloadInput);
     let options = buildOptionsAndHeaders();
 
     const request = http.request(options, (response) => {

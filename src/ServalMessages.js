@@ -1,6 +1,8 @@
 const ServalGET = require('./ServalGETMessages');
 const ServalPOST = require('./ServalPOSTMessages');
 const Util = require('util');
+const fs = require('fs');
+const Manifest = require('./ServalManifestBuilders');
 
 function showResponse(responseBody) {
 
@@ -12,28 +14,37 @@ function showResponse(responseBody) {
 }
 
 // gets mySID, builds default manifest, puts everything together and "restful/rhizome/insert"s it
-function insertDefaultRhizomeBundleWith(payload) {
-    ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
-        // console.log("Retrieved myKeyRing: " + Util.inspect(myKeyRing));
-        // console.log("Now trying to send POST message");
+function insertDefaultRhizomeBundleWith(manifestExtension, payload) {
+    let manifestAppendix;
+    if (manifestExtension === "" || manifestExtension === false || manifestExtension === undefined || !manifestExtension){
+        manifestAppendix = Manifest.buildDefaultManifestExtension();
+    } else {
+        manifestAppendix = manifestExtension;
+    }
 
-        ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, payload, showResponse);
+    ServalGET.getMyKeyRingIdentity().then(function (myKeyRing) {
+        ServalPOST.sendRhizomeInsertPostMessage(myKeyRing.identity.sid, manifestAppendix, payload, showResponse);
     })
 }
 
-/*
-return new Promise(
-    function (fulfill, reject) {
+function insertFileRhizomeBundle(msg) {
+    let manifestExtension = Manifest.buildInsertFileManifestFor(msg);
 
-
-    }
-);
-*/
-
+    fs.readFile(msg.path + msg.filename, null, (buffer) => {
+        insertDefaultRhizomeBundleWith(manifestExtension, buffer);
+    });
+}
 function updateFileRhizomeBundle(msg) {
-    console.log("Dummy for updating received message: " + Util.inspect(msg));
+    // let msg = ComCenterMsg.EmptyIncomingRosPhotoMessage; // FYI
+    let manifestExtension = Manifest.buildUpdateFileManifestFor(msg);
+
+    fs.readFile(msg.path + msg.filename, null, (buffer) => {
+        insertDefaultRhizomeBundleWith(manifestExtension, buffer);
+    });
 }
 
+
+module.exports.insertFileRhizomeBundle = insertFileRhizomeBundle;
 module.exports.updateFileRhizomeBundle = updateFileRhizomeBundle;
 module.exports.insertDefaultRhizomeBundleWith = insertDefaultRhizomeBundleWith;
 

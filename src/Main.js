@@ -3,51 +3,37 @@
  *
  */
 
-const Util = require("util");
 const Serval = require('./ServalMessages');
-const ComCenter = require('./CommandCenterMessageTypes');
-const ObjComp = require('./ObjectsComparison');
+const RosMsg  = require('./RosMessages');
 
 // check every 5 seconds
 let intervalInMs = 5000;
 
-//const RosMsg = require('./MessageToROS');
-//RosMsg.subscribeToDefaultTopic();
-const blankManifest = ComCenter.blankManifest;
-const blankBundle = ComCenter.blankBundle;
+RosMsg.subscribeToDefaultTopic();
 
-Serval.insertDefaultRhizomeBundleWith("DemoContent" + Date.now());
-
+// setInterval(() => {
+    Serval.insertDefaultRhizomeBundleWith("", "DemoContent" + Date.now());
+//}, intervalInMs * 1.7);
 
 // bundlelist polling loop
-let pollingClient = setInterval(() => {
+setInterval(() => {
 
     Serval.simplifiedGetVeryLatestBundleID().then((latestBundleID) => {
-        console.log("\nDONE GETTING BUNDLEID\n");
+        console.log("DONE GETTING BUNDLEID");
+        if (latestBundleID === 0) {
+            console.log("ALL BUNDLES PROCESSED - NOTHING TO DO");
+        } else {
+            Serval.getBundle(latestBundleID).then( (res) => {
+                console.log("DONE GETTING BUNDLE CONTENT");
 
-        Serval.getBundle(latestBundleID).then( (res) => {
-            console.log("\nDONE GETTING BUNDLE CONTENT\n");
-
-            // TODO: try catch
-            validateAndRespondTo(res);
-        });
+                try {
+                    RosMsg.validateAndPassMessageToROS(res);
+                } catch (e){
+                    console.log("RosMsg.validateAndPassMessageToROS: Something went wrong:");
+                    console.log(e.message);
+                }
+            });
+        }
     });
 
 }, intervalInMs);
-
-
-function validateAndRespondTo(res) {
-    let veryLatestBundlePayload = res;
-
-    if (!veryLatestBundlePayload) {
-        // not a ros-message => possibly something else
-        console.log("**************** Received wrong or empty message: " + veryLatestBundlePayload);
-
-    } else {
-        // in case it is message to ros
-        console.log("**************** Would now send msg to robot: " + veryLatestBundlePayload);
-        // RosMsg.sendMsgToRobot(whatever) // TODO: create this
-
-    }
-}
-

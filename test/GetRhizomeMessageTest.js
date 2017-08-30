@@ -1,21 +1,34 @@
 const RhizomePOST = require('../src/ServalPOSTMessages');
 const RhizomeGET = require('../src/ServalGETMessages');
+const JsonTools = require('../src/JsonTools');
 
 require('mocha');
+require('chai');
 let expect = require('chai').expect;
 
-const knownExistingBundleID = "CC33880E952D5A2837A639A65FBD65D609FC7C0DF8D0D788BA9D94EE57B2A3F7";
+const exampleBundleList = '{\n' +
+    '"header":[".token","_id","service","id","version","date",".inserttime",".author",".fromhere","filesize","filehash","sender","recipient","name"],\n' +
+    '"rows":[\n' +
+    '["p1JoAkwiRXitAhIbAO54NQQAAAAAAAAA",4,"rhizome","031378CCFB66C277159578F5F1831230D4AEAE6E750AD691AAA9474827255916",1504106961778,1504106961779,1504106961832,"48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",1,26,"D6BCB1E86686E6EA8C92B1903845BCC503D1568A6361F51D213D86E625DC353FEBCC291BEA102E49EBE9A79A08A657D23BE62D829606E757956E2D08ABA6BC6C","48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",null,"myAwesomeExample1504106961774"],\n' +
+    '[null,3,"rhizome","2CB154355BB394D860B4A2E89AE42F206841F0FD743A37A48263B9985AB87A94",1504106953278,1504106953279,1504106953332,"48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",1,26,"647CD173172CEA0DD0B2B1F7DF38D5ABC5209F4C9CA4765F94617AF2D6E63000263F4DA73C7A9D67CF63DCA7D72C02B1D1C0ADBC924C9808AC3C67FDA625EDC4","48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",null,"myAwesomeExample1504106953273"],\n' +
+    '[null,2,"rhizome","20876BEB15F2EA89B662D719C665855E48FFBE51CA6B00BDABD1FACEBED4C25C",1504106944785,1504106944786,1504106944843,"48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",1,26,"FEE0F545879D00BBDB2B4D061475FDA16FFE9B20803C6DF8CB61E0F57FD65513E31095273A675189371B30A2B750412F1D91CC3FA31CB511322DCD894E87BD7C","48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",null,"myAwesomeExample1504106944774"],\n' +
+    '[null,1,"rhizome","21729AA825F785D03A5CD86807D2A38D9098B7D17520AEDC04CB44BC2CBD7B86",1504104457328,1504104457328,1504104457378,"48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",1,26,"1B0AE23F7B5DBFB611B468CD09EB43409033744D7F6ACCB1337085A5C64CBDB8DF1F5578150F861B7113A36729DB7A48727BF7D7452000E412B32251573C32C2","48FD5D58DD544BC8B2FF1E3AF58DCDA653868CA5328C2152CFBCC21344E4FF34",null,"myAwesomeExample1504104457320"]\n' +
+    ']\n' +
+    '}\n';
+const exampleBundleArray = JsonTools.checkAndRepairJsonBundleList(exampleBundleList);
 
 describe('RhizomeGET', function() {
-    describe('#hasMsgType()', function () {
-        it('should detect missing msgType field', function () {
-            RhizomeGET.getLatestBundles(knownExistingBundleID).then((res) => {
-                if (!res) {done(true)}
-                else {done()}
-            });
-        });
-        it('should confirm existing msgType field', function () {
-
+    describe('#getLatestBundleWithoutTokenIdFromBundleArray', function () {
+        it('should return a string with 64 chars', function () {
+            let res = RhizomeGET.getLatestBundleWithoutTokenIdFromBundleArray(exampleBundleArray);
+            expect(res).to.be.a('string').that.has.length(64);
         });
     });
+    describe('#getLatestBundleWithTokenIdFromBundleArray', function () {
+        it('should return a string with 64 chars', function () {
+            let res = RhizomeGET.getLatestBundleWithTokenIdFromBundleArray(exampleBundleArray);
+            expect(res).to.be.a('string').that.has.length(64);
+        });
+    });
+
 });

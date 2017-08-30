@@ -96,18 +96,37 @@ module.exports.simplifiedGetVeryLatestBundleID= function () {
                     } else {
 
                         // TODO: Change this to read, fix, manage (store: compare/add/update/drop), and process all the bundles
-                        let latestBundleID = fixedBundleList[0].id;
+
+                        //let latestBundleID = getLatestBundleWithoutTokenIdFromBundleArray(fixedBundleList);
+
+                        // always return the last-received item on top of the list
+                        let latestBundleID = getLatestBundleWithTokenIdFromBundleArray(fixedBundleList);
 
                         console.log("Latest bundle is: " + latestBundleID);
                         fulfill(latestBundleID);
 
                     }
-
                 }
             });
         }
     );
 };
+
+function getLatestBundleWithTokenIdFromBundleArray(bundleArray) {
+    return bundleArray[0].id;
+}
+module.exports.getLatestBundleWithTokenIdFromBundleArray = getLatestBundleWithTokenIdFromBundleArray;
+
+function getLatestBundleWithoutTokenIdFromBundleArray(bundleArray) {
+    let len = bundleArray.length;
+    for (let linePos = 0; linePos < len; linePos += 1) {
+        if (bundleArray[linePos]['.token'] === null) {
+            return bundleArray[linePos].id;
+        }
+    }
+    return false
+}
+module.exports.getLatestBundleWithoutTokenIdFromBundleArray = getLatestBundleWithoutTokenIdFromBundleArray;
 
 function mayTryToTouchBundleList(res) {
     if (!res.hasOwnProperty('body')) {return false}
