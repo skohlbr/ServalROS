@@ -77,7 +77,7 @@ module.exports.validateAndPassMessageToROS = function (incomingMessage) {
 function moveToGoalPose(pose) {
     let cmdVel = new ROSLIB.Topic({
         ros : ros,
-        name : '/cmd_vel', // Topic Name goes here
+        name : '/move_base/simple_goal', // Topic Name goes here
         messageType : 'geometry_msgs/PoseStamped'
     });
 
